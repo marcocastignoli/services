@@ -1,100 +1,57 @@
 <!DOCTYPE html>
 <html lang="en">
-
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>Document</title>
-    <style type="text/css" media="screen">
-        #editor { 
-            position: absolute;
-            top: 0;
-            right: 0;
-            bottom: 0;
-            left: 0;
-        }
-    </style>
-</head>
-
-<body>
-    <div id="editor">if(data.action === "template") {
-    return {
-        id: "asd",
-        name: "Pizza+",
-        properties: [
-            {
-                name: "taste",
-                label: "Gusto",
-                type: "select",
-                options: [
-                    { label: "Margerita", value: "margherita" },
-                    { label: "Quattro stagioni", value: "quattrostagioni" },
-                ]
-            },
-            {
-                name: "quantity",
-                label: "Quantità",
-                type: "int"
-            },
-            {
-                label: "Ordina",
-                type: "submit",
-                action: "order"
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta http-equiv="X-UA-Compatible" content="ie=edge">
+        <title>Document</title>
+    </head>
+    <body>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.1.1/socket.io.js"></script>
+        <script src="./WebService.js"></script>
+        <script>
+            const socket = io('http://localhost:3000');
+            const WebSocketService = {
+                on: function (channel, callback) {
+                    socket.on(channel, callback)
+                },
+                emit: function (channel, data) {
+                    socket.emit(channel, data)
+                }
             }
-        ]
-    }
-}
-if (data.action === "order"){
-    console.log(data.arguments)
-    return "Ok"
-}
-    </div>
-
-    <script src="ace-builds/src-noconflict/ace.js" type="text/javascript" charset="utf-8"></script>
-    <script>
-        var editor = ace.edit("editor");
-        editor.setTheme("ace/theme/monokai");
-        editor.session.setMode("ace/mode/javascript");
-    </script>
-
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.1.1/socket.io.js"></script>
-    <script>
-        var socket = io('http://localhost:3000');
-        async function main(data, reply) {
-            var custom_function = new Function("data", editor.getValue())
-            reply(custom_function(data));
-        }
-
-        function sign(domain) {
-            var custom_function = new Function("data", editor.getValue())
-            socket.emit('sign', {
-                domain: domain,
-                template: custom_function({action: "template"})
-            });
-            socket.on('signed', function (data) {
-                console.log(data)
-                
-                socket.on('request.received', function (data) {
-                    const response = main(data, function (response) {
-                        socket.emit('request.reply', response);
-                    });
-                });
-            })
-        }
-
-        socket.on('init', function (data) {
-            console.log(data);
-        });
-
-        socket.on('request.replied', function (data) {
-            console.log(data);
-        });
-
-        function sendRequest(domain, parameters) {
-            socket.emit('request.send', { domain: domain, parameters: parameters });
-        }
-    </script>
-</body>
-
+            const webservice = new WebService(WebSocketService, {
+                id: "asd",
+                name: "Pizza+",
+                properties: [
+                    {
+                        name: "taste",
+                        label: "Gusto",
+                        type: "select",
+                        options: [
+                            {
+                                label: "Margerita",
+                                value: "margherita"
+                            }, {
+                                label: "Quattro stagioni",
+                                value: "quattrostagioni"
+                            }
+                        ]
+                    }, {
+                        name: "quantity",
+                        label: "Quantità",
+                        type: "int"
+                    }, {
+                        label: "Ordina",
+                        type: "submit",
+                        action: "order"
+                    }
+                ]
+            }, {
+                order: function(data, reply){
+                    console.log(data)
+                    reply("Ok")
+                }
+            }, data => webservice.sign("marco", "12345"))
+        </script>
+    </body>
 </html>
