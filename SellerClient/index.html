@@ -44,14 +44,22 @@
                         label: "Ordina",
                         type: "submit",
                         action: "order"
+                    }, {
+                        label: "News",
+                        type: "submit",
+                        action: "news"
                     }
                 ]
             }, {
-                order: function(data, reply){
-                    console.log(data)
-                    setTimeout(function () {
-                        reply("Ok")
-                    }, 2000)
+                order: function (data, ws) {
+                    //setTimeout(function () {
+                        ws.reply("Ok", {buffer: false})
+                    //}, 2000)
+                },
+                news: function (data, ws) {
+                    setInterval(function () {
+                        ws.reply("Ok", {buffer: true})
+                    }, 2000);
                 }
             }, data => webservice.sign("marco", "12345"))
         </script>

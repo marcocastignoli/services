@@ -1,3 +1,17 @@
+class WSReply {
+    constructor(emit, task_id){
+        this.emit = emit
+        this.task_id = task_id
+    }
+    reply(response, options) {
+        let response_object = {
+            data: response,
+            task_id: this.task_id,
+            buffer: options.buffer | false
+        }
+        this.emit('request.reply', response_object);
+    }
+}
 class WebService {
     constructor(WebSocketService, template, routes, init) {
         if (WebSocketService && typeof WebSocketService.on === "function"  && typeof WebSocketService.emit === "function") {
@@ -21,17 +35,11 @@ class WebService {
         this.domain = domain
         this.on('signed', (msg) => {
             console.log(msg)
-
             this.on('request.received', (data) => {
                 let message = data.parameters
                 if(this.routes && typeof this.routes[message.action] === "function"){
-                    this.routes[message.action](message.arguments, (response) => {
-                        let response_object = {
-                            data: response,
-                            task_id: message.task_id
-                        }
-                        socket.emit('request.reply', response_object);
-                    })
+                    let wsReply = new WSReply(this.emit, data.task_id)
+                    this.routes[message.action](message.arguments, wsReply)
                 }
             });
         })
