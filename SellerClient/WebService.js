@@ -23,9 +23,14 @@ class WebService {
             console.log(msg)
 
             this.on('request.received', (data) => {
-                if(this.routes && typeof this.routes[data.action] === "function"){
-                    this.routes[data.action](data.arguments, (response) => {
-                        socket.emit('request.reply', response);
+                let message = data.parameters
+                if(this.routes && typeof this.routes[message.action] === "function"){
+                    this.routes[message.action](message.arguments, (response) => {
+                        let response_object = {
+                            data: response,
+                            task_id: message.task_id
+                        }
+                        socket.emit('request.reply', response_object);
                     })
                 }
             });

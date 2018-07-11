@@ -49,7 +49,9 @@
             }, {
                 order: function(data, reply){
                     console.log(data)
-                    reply("Ok")
+                    setTimeout(function () {
+                        reply("Ok")
+                    }, 2000)
                 }
             }, data => webservice.sign("marco", "12345"))
         </script>

@@ -5,7 +5,7 @@ var fs = require('fs')
 app.listen(3000)
 
 let clients = []
-let domain_tasks = {}
+let domain_tasks = []
 let cluster = []
 let task_queue = []
 
@@ -46,22 +46,27 @@ io.on('connection', function (socket) {
         const domain_client = clients.find(client => client.domain_name === data.domain)
         if(domain_client){
             for (let id of domain_client.cluster) {
-                if(!(id in domain_tasks)){
-                    domain_tasks[id] = socket.id
-                    io.to(id).emit("request.received", data.parameters)
+                const domain_task = domain_tasks.find(domain_task => domain_task.domain_id === id)
+                if(typeof domain_task === "undefined"){
+                    let task_id = Date.now()
+                    domain_tasks.push({taks_id: task_id, domain_id: id, client_id: socket.id })
+                    data.task_id = task_id
+                    io.to(id).emit("request.received", data)
                     return
                 }
             }
-            task_queue.push({domain: domain_client.domain_name, message: data, destination: socket.id})
+            task_queue.push({domain: domain_client.domain_name, data: data, destination: socket.id})
         } else {
             io.to(socket.id).emit("request.replied", "Domain not found");
         }
     })
 
     socket.on('request.reply', function (response) {
-        if(domain_tasks[socket.id]){
-            io.to(domain_tasks[socket.id]).emit('request.replied', response)
-            delete domain_tasks[socket.id]
+        const domain_task = domain_tasks.find(domain_task => domain_task.task_id === response.task_id)
+        if(domain_task){
+            io.to(domain_task.client_id).emit('request.replied', response)
+            domain_tasks = domain_tasks.filter(domain_task_to_delete => domain_task_to_delete.taks_id === domain_task.task_id);
+            // Check inside the queue if there is a pending task
             const domain_ref = cluster[socket.id]
             let task_index_to_delete = null
             const new_task = task_queue.find((task,index) => {
@@ -73,8 +78,10 @@ io.on('connection', function (socket) {
                 }
             })
             if(new_task){
-                domain_tasks[socket.id] = new_task.destination
-                io.to(socket.id).emit("request.received", new_task.message.parameters)
+                let task_id = Date.now()
+                domain_tasks.push({taks_id: task_id, domain_id: socket.id, client_id: new_task.destination })
+                new_task.data.task_id = task_id
+                io.to(socket.id).emit("request.received", new_task.data)
                 delete task_queue[task_index_to_delete]
             }
         }
