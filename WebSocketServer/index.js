@@ -46,7 +46,7 @@ io.on('connection', function (socket) {
         const domain_client = clients.find(client => client.domain_name === data.domain)
         if(domain_client){
             for (let id of domain_client.cluster) {
-                var this_domain_task = domain_tasks.filter(domain_task => (domain_task.domain_id === id && !domain_task.buffering))
+                var this_domain_task = domain_tasks.filter(domain_task => (domain_task.domain_id === id && !domain_task.async))
                 if(!this_domain_task.length){
                     let task_id = Date.now()
                     domain_tasks.push({task_id: task_id, domain_id: id, client_id: socket.id})
@@ -88,7 +88,7 @@ io.on('connection', function (socket) {
                     delete task_queue[task_index_to_delete]
                 }
             } else {
-                domain_task.buffering = true
+                domain_task.async = true
             }
         }
     })
