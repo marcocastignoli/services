@@ -65,6 +65,7 @@ io.on('connection', function (socket) {
         const domain_task = domain_tasks.find(domain_task => domain_task.task_id === response.task_id)
         if(domain_task){
             io.to(domain_task.client_id).emit('request.replied', response)
+            // delete the task just done
             domain_tasks = domain_tasks.filter(domain_task_to_delete => domain_task_to_delete.taks_id === domain_task.task_id);
             // Check inside the queue if there is a pending task
             const domain_ref = cluster[socket.id]
