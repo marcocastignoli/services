@@ -9,6 +9,8 @@ Vue.use(VueSocketio, 'http://localhost:3000');
 
 Vue.use(VueRouter)
 
+Vue.prototype.$eventHub = new Vue();
+
 new Vue({
   router,
   render: h => h(App)
